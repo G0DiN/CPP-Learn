@@ -1,5 +1,6 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <WinSock2.h>
+#include <string>
 #include <iostream>
 
 #pragma warning(disable:4996)
@@ -9,16 +10,21 @@ int Counter = 0;
 
 void ClientHandler(int index)
 {
-  char msg[256];
+  int msg_size;
   while (true)
   {
-    recv(Connections[index], msg, sizeof(msg), NULL);
+    recv(Connections[index], (char*)&msg_size, sizeof(int), NULL);
+    char* msg = new char[msg_size + 1];
+    msg[msg_size] = '\0';
+    recv(Connections[index], msg, msg_size, NULL);
     for (int i = 0; i < Counter; i++)
     {
       if (i == index)
         continue;
-      send(Connections[i], msg, sizeof(msg), NULL);
+      send(Connections[i], (char*)&msg_size, sizeof(int), NULL);
+      send(Connections[i], msg, msg_size, NULL);
     }
+    delete[] msg;
   }
 }
 
@@ -52,8 +58,10 @@ int main()
     else
     {
       std::cout << "Sucsess by listen! Congradulations\n";
-      char msg[256] = "Hello you real good man, it's your second network programm!!!";
-      send(newConnection, msg, sizeof(msg), NULL);
+      std::string msg = "Hello you real good man, it's your second network programm!!!";
+      int msg_size = msg.size();
+      send(newConnection, (char*)&msg_size, sizeof(int), NULL);
+      send(newConnection, msg.c_str(), msg_size, NULL);
 
       Connections[i] = newConnection;
       Counter++;
