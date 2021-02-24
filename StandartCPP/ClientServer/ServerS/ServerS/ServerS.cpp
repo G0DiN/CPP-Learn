@@ -4,6 +4,24 @@
 
 #pragma warning(disable:4996)
 
+SOCKET Connections[100];
+int Counter = 0;
+
+void ClientHandler(int index)
+{
+  char msg[256];
+  while (true)
+  {
+    recv(Connections[index], msg, sizeof(msg), NULL);
+    for (int i = 0; i < Counter; i++)
+    {
+      if (i == index)
+        continue;
+      send(Connections[i], msg, sizeof(msg), NULL);
+    }
+  }
+}
+
 int main()
 {
   WSAData wsaData;
@@ -25,15 +43,23 @@ int main()
   listen(sListen, SOMAXCONN);
 
   SOCKET newConnection;
-  newConnection = accept(sListen, (SOCKADDR*)&addr_in, &sizeofaddrin);
-
-  if (newConnection == 0)
-    std::cout << "Error by listen to connect\n";
-  else
+  for (int i = 0; i < 100; i++)
   {
-    std::cout << "Sucsess by listen! Congradulations\n";
-    char msg[256] = "Hello you real good man, it's your second network programm!!!";
-    send(newConnection, msg, sizeof(msg), NULL);
+    newConnection = accept(sListen, (SOCKADDR*)&addr_in, &sizeofaddrin);
+
+    if (newConnection == 0)
+      std::cout << "Error by listen to connect\n";
+    else
+    {
+      std::cout << "Sucsess by listen! Congradulations\n";
+      char msg[256] = "Hello you real good man, it's your second network programm!!!";
+      send(newConnection, msg, sizeof(msg), NULL);
+
+      Connections[i] = newConnection;
+      Counter++;
+      CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)ClientHandler, (LPVOID)(i), NULL, NULL);
+      
+    }
   }
 
   system("pause");

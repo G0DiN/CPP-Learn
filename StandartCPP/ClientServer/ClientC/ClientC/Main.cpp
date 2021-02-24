@@ -4,6 +4,18 @@
 
 #pragma warning(disable:4996)
 
+SOCKET Connection;
+
+void ClientHandler()
+{
+  char msg[256];
+  while (true)
+  {
+    recv(Connection, msg, sizeof(msg), NULL);
+    std::cout << msg << std::endl;
+  }
+}
+
 int main(int argc, char* argv[])
 {
   WSAData wsaData;
@@ -20,18 +32,23 @@ int main(int argc, char* argv[])
   addr_in.sin_port = htons(1234);
   addr_in.sin_family = AF_INET;
 
-  SOCKET con = socket(AF_INET, SOCK_STREAM, NULL);
-  if (connect(con, (SOCKADDR*)&addr_in, sizeof(addr_in)) != 0)
+  Connection = socket(AF_INET, SOCK_STREAM, NULL);
+  if (connect(Connection, (SOCKADDR*)&addr_in, sizeof(addr_in)) != 0)
   {
     std::cout << "Error connecting!!\n";
     return 1;
   }
 
   std::cout << "Sucsess boy\n";
-  char acceptMSG[256];
-  recv(con, acceptMSG, sizeof(acceptMSG), NULL);
-  std::cout << acceptMSG << std::endl;
 
+  CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)ClientHandler, NULL, NULL, NULL);
+  char msgl[256];
+  while (true)
+  {
+    std::cin.getline(msgl, sizeof(msgl));
+    send(Connection, msgl, sizeof(msgl), NULL);
+    Sleep(10);
+  }
 
   system("pause");
   return 0;
